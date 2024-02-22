@@ -61,7 +61,7 @@ router.post('/register', async (req, res, next) => {
     4- On FAILED registration due to the `username` being taken,
       the response body should include a string exactly as follows: "username taken".
   */
-});
+
 
 router.post('/login', (req, res) => {
   res.end('implement login, please!');
