@@ -1,14 +1,41 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const User = require('./user-model')
-router.post('/register', (req, res, next) => {
+router.post('/register', async (req, res, next) => {
   const { username, password } = req.body;
-  const hash = bcrypt.hashSync(password, 8)
 
-  User.add({ username, password: hash })
-    .then(saved => {
-      res.status(201).json(saved)
-    }).catch(next)
+  try {
+    // Check if username or password is missing
+    if (!username || !password) {
+      return res.status(400).json({ message: "username and password required" });
+    }
+
+    // Check if username is already taken
+    const existingUser = await User.findBy({ username }).first();
+    if (existingUser) {
+      return res.status(400).json({ message: "username taken" });
+    }
+
+    // Hash the password
+    const hash = bcrypt.hashSync(password, 8);
+
+    // Add the new user to the database
+    const newUser = await User.add({ username, password: hash });
+
+    // Respond with the new user's information
+    res.status(201).json(newUser);
+  } catch (error) {
+    next(error);
+  }
+});
+// router.post('/register', (req, res, next) => {
+//   const { username, password } = req.body;
+//   const hash = bcrypt.hashSync(password, 8)
+
+//   User.add({ username, password: hash })
+//     .then(saved => {
+//       res.status(201).json(saved)
+//     }).catch(next)
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
