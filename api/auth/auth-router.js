@@ -23,9 +23,9 @@ router.post('/register', async (req, res, next) => {
 
     // Add the new user to the database
     const newUser = await User.add({ username, password: hash });
-
+    const newUserId = await User.findBy({ newUser }).first()
     // Respond with the new user's information
-    res.status(201).json(newUser);
+    res.status(201).json(newUserId);
   } catch (error) {
     next(error);
   }
