@@ -4,11 +4,10 @@ function findById(user_id) {
     return db('users').select('user_id', 'username').where('user_id', user_id).first();
 }
 async function add(user) {
-    // Insert the user into the database
     const [userId] = await db('users').insert(user);
-  
+
     // Retrieve the newly inserted user from the database
-    const newUser = await db('users').where('id', userId).first();
+    const newUser = await db('users').where('id', userId).select('id', 'username').first();
   
     return newUser;
   }
