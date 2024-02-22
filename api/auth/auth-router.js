@@ -1,5 +1,7 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { jwtSecret } = require('./config');
 const User = require('./user-model')
 router.post('/register', async (req, res, next) => {
   const { username, password } = req.body;
@@ -36,35 +38,69 @@ router.post('/register', async (req, res, next) => {
 //     .then(saved => {
 //       res.status(201).json(saved)
 //     }).catch(next)
-  /*
-    IMPLEMENT
-    You are welcome to build additional middlewares to help with the endpoint's functionality.
-    DO NOT EXCEED 2^8 ROUNDS OF HASHING!
+/*
+  IMPLEMENT
+  You are welcome to build additional middlewares to help with the endpoint's functionality.
+  DO NOT EXCEED 2^8 ROUNDS OF HASHING!
 
-    1- In order to register a new account the client must provide `username` and `password`:
-      {
-        "username": "Captain Marvel", // must not exist already in the `users` table
-        "password": "foobar"          // needs to be hashed before it's saved
-      }
+  1- In order to register a new account the client must provide `username` and `password`:
+    {
+      "username": "Captain Marvel", // must not exist already in the `users` table
+      "password": "foobar"          // needs to be hashed before it's saved
+    }
 
-    2- On SUCCESSFUL registration,
-      the response body should have `id`, `username` and `password`:
-      {
-        "id": 1,
-        "username": "Captain Marvel",
-        "password": "2a$08$jG.wIGR2S4hxuyWNcBf9MuoC4y0dNy7qC/LbmtuFBSdIhWks2LhpG"
-      }
+  2- On SUCCESSFUL registration,
+    the response body should have `id`, `username` and `password`:
+    {
+      "id": 1,
+      "username": "Captain Marvel",
+      "password": "2a$08$jG.wIGR2S4hxuyWNcBf9MuoC4y0dNy7qC/LbmtuFBSdIhWks2LhpG"
+    }
 
-    3- On FAILED registration due to `username` or `password` missing from the request body,
-      the response body should include a string exactly as follows: "username and password required".
+  3- On FAILED registration due to `username` or `password` missing from the request body,
+    the response body should include a string exactly as follows: "username and password required".
 
-    4- On FAILED registration due to the `username` being taken,
-      the response body should include a string exactly as follows: "username taken".
-  */
+  4- On FAILED registration due to the `username` being taken,
+    the response body should include a string exactly as follows: "username taken".
+*/
 
 
-router.post('/login', (req, res) => {
-  res.end('implement login, please!');
+router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    // Check if username or password is missing
+    if (!username || !password) {
+      return res.status(400).json({ message: "username and password required" });
+    }
+
+    // Find user by username
+    const user = await User.findBy({ username }).first();
+    if (!user) {
+      return res.status(401).json({ message: "invalid credentials" });
+    }
+
+    // Check if password is correct
+    const passwordValid = bcrypt.compareSync(password, user.password);
+    if (!passwordValid) {
+      return res.status(401).json({ message: "invalid credentials" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign({
+      userId: user.id,
+      username: user.username,
+    }, jwtSecret, { expiresIn: '1h' });
+
+    // Respond with success message and token
+    res.status(200).json({
+      message: `welcome, ${user.username}`,
+      token,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "server error" });
+  }
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
