@@ -7,7 +7,7 @@ async function add(user) {
     const [userId] = await db('users').insert(user);
 
     // Retrieve the newly inserted user from the database
-    const newUser = await db('users').where('id', userId).select('id', 'username').first();
+    const newUser = await db('users').where('id', userId).select('id', 'username','password').first();
   
     return newUser;
   }
